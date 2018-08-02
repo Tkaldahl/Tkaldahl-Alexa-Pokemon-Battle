@@ -135,7 +135,7 @@ let pokemonStats = {
       defense: 282,
       spAttack: 240,
       speed: 287
-      },
+    },
     moves: {
       bite: {
         power: 60,
@@ -184,7 +184,7 @@ let pokemonStats = {
     }
   }
 }
-let currentPokemon = undefined;
+let currentPokemon;
 
 module.exports.handler = (event, context, callback) => {
   // console.log(`handler is firing: ${JSON.stringify(event)}`);
@@ -221,9 +221,9 @@ const handlers = {
       var speechOutput = `Hello, you last left off ${room['$']['name']}. Would you like to resume? `;
       var reprompt = `Say, resume game, or, new game.`;
       speechOutput = speechOutput + reprompt;
-      var cardTitle = `Restart`;
-      var cardContent = speechOutput;
-      var imageObj = undefined;
+      // var cardTitle = `Restart`;
+      // var cardContent = speechOutput;
+      // var imageObj = undefined;
       // console.log(`LaunchRequest JSON is: ${JSON.stringify({
       //   "speak": speechOutput,
       //   "listen": reprompt,
@@ -235,9 +235,11 @@ const handlers = {
       // })}`);
       this.response.speak(speechOutput)
         .listen(reprompt)
-        .cardRenderer(cardTitle, cardContent, imageObj);
+        // .cardRenderer(cardTitle, cardContent, imageObj);
       this.emit(':responseReady');
     } else {
+      this.event.session.attributes['roster'] = [];
+      this.event.session.attributes['npc'] = [];
       this.emit('WhereAmI');
     }
   },
@@ -306,21 +308,21 @@ const handlers = {
     var reducedContent = `${firstSentence}. ${reprompt}.`;
 
     // say less if you've been here before
-    if (this.event.session.attributes['visited'] === undefined) {
-      this.event.session.attributes['visited'] = [];
-      this.event.session.attributes['roster'] = [];
-      this.event.session.attributes['npc'] = [];
-    }
-    if (this.event.session.attributes['visited'].includes(room['$']['pid'])) {
-      console.log(`WhereAmI: player is revisiting`);
-      speechOutput = reducedContent;
-    } else {
-      this.event.session.attributes['visited'].push(room['$']['pid']);
-    }
+    // if (this.event.session.attributes['visited'] === undefined) {
+    //   this.event.session.attributes['visited'] = [];
+    //   this.event.session.attributes['roster'] = [];
+    //   this.event.session.attributes['npc'] = [];
+    // }
+    // if (this.event.session.attributes['visited'].includes(room['$']['pid'])) {
+    //   console.log(`WhereAmI: player is revisiting`);
+    //   speechOutput = reducedContent;
+    // } else {
+    //   this.event.session.attributes['visited'].push(room['$']['pid']);
+    // }
     // all of this information is for visual Alexa tools. Call it using .cardRenderer(cardTitle, cardContent, imageObj); after a speak command.
-    var cardTitle = firstSentence;
-    var cardContent = (reprompt > '') ? reprompt : lastSentence;
-    var imageObj = undefined;
+    // var cardTitle = firstSentence;
+    // var cardContent = (reprompt > '') ? reprompt : lastSentence;
+    // var imageObj = undefined;
 
     // console.log(`WhereAmI: ${JSON.stringify({
     //   "speak": speechOutput,
@@ -369,8 +371,11 @@ const handlers = {
         playerSelectedPokemon = this.event.session.attributes['roster'][0]
         playerHp = pokemonStats[playerSelectedPokemon].stats.hp
         battleStart = true
+        this.response.speak(speechOutput)
+          .listen(reprompt)
       }
-      this.response.speak(speechOutput)
+      // this.response.speak(speechOutput)
+      //   .listen(reprompt)
       this.emit('Fight')
     } else {
       console.log(`the room tag is: ${roomTags}`)
@@ -397,39 +402,61 @@ const handlers = {
     activeBattle = true
     var speechOutput = ""
     if (battleStart === true) {
-      speechOutput = npcSelectedPokemon + ' I choose you!'
+      // battleStart === false
+      speechOutput = `Gary smiles smugly as you enter the room. 'My pokemon is way out of your league,' he says, '${npcSelectedPokemon} I choose you!'`
       this.response.speak(speechOutput)
+        .listen('choose an attack')
+      this.emit(':responseReady')
+    } else if (playerHp < 0) {
+      console.log('you lost the battle');
+      this.emit('You have been defeated');
+    } else if (npcHp < 0) {
+      console.log('you won the battle');
+      this.emit('You are victorious')
+    } else {
+      this.emit(':responseReady')
     }
-    // followLink(this.event, [this.event.request.intent.slots.npc.value, 'fight']);
-    this.emit('BattleStatus');
   },
   'ChooseMove': function() {
+    var speechOutput;
     console.log('ChooseMove');
-    var slotValues = getSlotValues(this.event.request.intent.slots);
+    var attackChoice = this.event.request.intent.slots.attack.value.split(' ')
+    attackChoice = attackChoice.join('')
+    console.log(`player chooses the attack: ${attackChoice}`)
+    var chosenMoveIndex;
+    if (pokemonStats[playerSelectedPokemon].moves[attackChoice]) {
+      console.log('The chosen move is a legal attack')
+      speechOutput = 'The chosen move is a legal attack'
+      // this.response.speak('The chosen move is a legal attack')
+      this.emit(':ask', speechOutput, speechOutput)
+    } else {
+      console.log(`${playerSelectedPokemon} doesn't know that move`)
+      speechOutput = `${playerSelectedPokemon} doesn't know that move`
+      // this.response.speak(`${playerSelectedPokemon} doesn't know that move`)
+      this.emit(':ask', speechOutput, speechOutput)
+    }
+    // console.log(`${attackChoice} has `)
     // The name of the attack we choose is stored in this.event.request.intent.slots.attack.value
-  },
-  'BattleStatus': function() {
-    console.log(`BattleStatus`)
   },
   'AMAZON.HelpIntent': function() {
     var speechOutput = 'This is the Sample Gamebook Skill. ';
     var reprompt = 'Say where am I, to hear me speak.';
     speechOutput = speechOutput + reprompt;
-    var cardTitle = 'Help.';
-    var cardContent = speechOutput;
-    var imageObj = undefined;
+    // var cardTitle = 'Help.';
+    // var cardContent = speechOutput;
+    // var imageObj = undefined;
     console.log(`HelpIntent: ${JSON.stringify({
       "speak": speechOutput,
       "listen": reprompt,
-      "card" : {
-        "title": cardTitle,
-        "content": cardContent,
-        "imageObj": imageObj
-      }
+      // "card" : {
+      //   "title": cardTitle,
+      //   "content": cardContent,
+      //   "imageObj": imageObj
+      // }
     })}`);
     this.response.speak(speechOutput)
       .listen(reprompt)
-      .cardRenderer(cardTitle, cardContent, imageObj);
+      // .cardRenderer(cardTitle, cardContent, imageObj);
     this.emit(':responseReady');
   },
   'AMAZON.CancelIntent': function() {
@@ -443,20 +470,20 @@ const handlers = {
     if (TableName) {
       speechOutput = `Your progress has been saved. ${speechOutput}`;
     }
-    var cardTitle = 'Exit.';
-    var cardContent = speechOutput;
-    var imageObj = undefined;
+    // var cardTitle = 'Exit.';
+    // var cardContent = speechOutput;
+    // var imageObj = undefined;
     console.log(`CompletelyExit: ${JSON.stringify({
       "speak": speechOutput,
       "listen": null,
-      "card" : {
-        "title": cardTitle,
-        "content": cardContent,
-        "imageObj": imageObj
-      }
+      // "card" : {
+      //   "title": cardTitle,
+      //   "content": cardContent,
+      //   "imageObj": imageObj
+      // }
     })}`);
     this.response.speak(speechOutput)
-      .cardRenderer(cardTitle, cardContent, imageObj);
+      // .cardRenderer(cardTitle, cardContent, imageObj);
     this.emit(':responseReady');
   },
   'AMAZON.RepeatIntent': function() {
