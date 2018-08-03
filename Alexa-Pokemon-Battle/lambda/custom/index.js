@@ -10,11 +10,12 @@ let activeBattle = false
 let battleStart = true // Changed for testing original value is false
 let pokemonArray = ['Venusaur', 'Blastoise', 'Charizard'] // An array for users to choose pokemon from. Checks for equality in the currentRoom function
 let garyPokemonArray = ['Exeggutor', 'Gyarados', 'Arcanine']
-let playerSelectedPokemon = 'Blastoise'; // Changed for testing. Original value is null
-let npcSelectedPokemon = 'Exeggutor'; // Changed for testing. Original value is null
-let playerHp = 362; // Changed for testing. Original value is null
-let npcHp = 394; // Changed for testing. Original value is null
+let playerSelectedPokemon; // Changed for testing. Original value is null
+let npcSelectedPokemon; // Changed for testing. Original value is null
+let playerHp; // Changed for testing. Original value is null
+let npcHp; // Changed for testing. Original value is null
 let swordsdanceBuff;
+let withdrawBuff;
 let focusenergyBuff;
 let pokemonStats = {
   Venusaur: {
@@ -425,17 +426,16 @@ const handlers = {
     var speechOutput;
     var playerDamageMessage;
     var npcDamageMessage;
-    var attacker = 'npc';
-    // Some attacks are two words so we need to join them together
-    var attackChoice = this.event.request.intent.slots.attack.value.split(' ');
-    attackChoice = attackChoice.join('');
     let playerPokemonStats = pokemonStats[playerSelectedPokemon].stats;
     let npcPokemonStats = pokemonStats[npcSelectedPokemon].stats;
-
+    var attacker = 'npc';
     // Pick which player attacks first
     if (playerPokemonStats.speed > npcPokemonStats.speed) {
       attacker = 'player'
     }
+    // Some attacks are two words so we need to join them together
+    var attackChoice = this.event.request.intent.slots.attack.value.split(' ');
+    attackChoice = attackChoice.join('');
 
     // NPC picks an attack
     let npcMovesArray = Object.keys(pokemonStats[npcSelectedPokemon].moves)
@@ -447,10 +447,27 @@ const handlers = {
     let chosenMove = pokemonStats[playerSelectedPokemon].moves[attackChoice];
     console.log(`here is the chosenMove ${chosenMove}`)
     if (chosenMove) {
+      // Load up damage messages and adjust health pools after attacks have fired. 
       playerDamageMessage = damageCalculator(chosenMove, attackChoice, playerSelectedPokemon, npcSelectedPokemon)
       npcDamageMessage = damageCalculator(npcChosenMoveObject, npcChosenMoveName, npcSelectedPokemon, playerSelectedPokemon)
       console.log(`this is the npcDamageMessage: ${npcDamageMessage}`)
       console.log(`This is the playerDamageMessage: ${playerDamageMessage}`)
+      // Fire messages in order and check for K.O's
+      if (attacker === 'npc') {
+        if (playerHp <= 0) {
+          speechOutput = npcDamageMessage + ` Gary has beaten you.`
+        } else if (npcHp <= 0){
+          speechOutput = npcDamageMessage + playerDamageMessage + ' You are victorious!'
+        } else {
+          speechOutput = npcDamageMessage + playerDamageMessage
+        }
+      } else if (npcHp <= 0) {
+        speechOutput = playerDamageMessage + ` You are victorious!`
+      } else if (playerHp <= 0) {
+        speechOutput = playerDamageMessage + npcDamageMessage + ` Gary has beaten you.`
+      } else {
+        speechOutput = playerDamageMessage + npcDamageMessage
+      }
       // this.response.speak('The chosen move is a legal attack')
       this.emit(':ask', speechOutput, speechOutput);
     } else {
