@@ -268,16 +268,14 @@ const handlers = {
     if (this.event.session.attributes['room'] === undefined) {
       // you just started so you are in the first room
       // console.log(`Here is the $twine value before changing: ${JSON.stringify($twine[0])}`)
+      this.event.session.attributes['roster'] = []
+      this.event.session.attributes['npc'] = [];
       this.event.session.attributes['room'] = $twine[0]['$']['pid'];
       speechOutput = `Welcome to ${story.replace('.html','')}. Lets start your game. `;
     }
 
     var room = currentRoom(this.event);
 
-    // Check to see that you have a pokemon selected and that you're not adding a repeat to the roster.
-    if (currentPokemon !== undefined && this.event.session.attributes['roster'].includes(currentPokemon) === false) {
-      this.event.session.attributes['roster'].push(currentPokemon);
-      }
     // console.log(`WhereAmI: in ${JSON.stringify(room)}`);
     // console.log(`linksRegex.exec on room is: ${linksRegex.exec(room['_'])}`)
 
@@ -532,13 +530,11 @@ function currentRoom(event) {
     if ($twine[i]['$']['pid'] === event.session.attributes['room']) {
       currentRoomData = $twine[i];
       // console.log('about to fire the choose pokemon conditional')
-      if (pokemonArray.indexOf($twine[i]['$']['tags']) > -1) {
+      // Check to see that you have a pokemon selected and that you're not adding a repeat to the roster.
+      if (pokemonArray.indexOf($twine[i]['$']['tags']) > -1 && event.session.attributes['roster'].includes(currentPokemon) === false) {
         currentPokemon = $twine[i]['$']['tags']
-        // console.log(`adding ${currentPokemon} to roster`)
-        // this.event.session.attributes['roster'].push(currentPokemon)
-      } /* else if ($twine[i]['$']['tags'] === 'BattleRoom') {
-        pokemonBattle()
-      } */
+        event.session.attributes['roster'].push(currentPokemon)
+      }
       break;
     }
   }
