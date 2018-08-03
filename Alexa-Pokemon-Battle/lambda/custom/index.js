@@ -446,7 +446,7 @@ const handlers = {
       }
 
       // Decide if critical hit
-      let critHitMessage;
+      let critHitMessage = '';
       let critMultiplier = 1;
       let critDecider = Math.floor(Math.random() * 256);
       let critThreshold = (userPokemonStats.speed / 2);
@@ -463,7 +463,7 @@ const handlers = {
 
       // Decide if super effective
       let effectiveMultiplier = 1;
-      let effectivenessMessage;
+      let effectivenessMessage = '';
       if (chosenMove.type === 'grass' || npcPokemonStats.type === 'dragon') {
         if (npcPokemonStats.type === 'water') {
           effectiveMultiplier = 2;
@@ -496,26 +496,27 @@ const handlers = {
 
       // Update the user on how each pokemon is doing 
       // Looking strong
-      // Isn't phased
-      // Is hanging in there
-      // Starting to get worn down
-      // is tired
-      // can barely stand
-      // is looking weak
+      // Doesn't look phased
+      // Starting to look tired
+      // Getting worn down
+      // Is tired
+      // Can barely stand
+      // Could fall at any second
       console.log(`This is the attackMessage: ${attackMessage}`)
       console.log(`This is the critHitMessage: ${critHitMessage}`)
       console.log(`This is the effectivenessMessage: ${effectivenessMessage}`)
       console.log(`This is the damageMessage: ${damageMessage}`)
-      if (critHitMessage && effectivenessMessage) {
-        speechOutput = `${attackMessage} ${critHitMessage} ${effectivenessMessage} ${damageMessage}.`
-      } else if (critHitMessage) {
-        speechOutput = `${attackMessage} ${critHitMessage} ${damageMessage}`
-      } else if (effectivenessMessage) {
-        speechOutput = `${attackMessage} ${effectivenessMessage} ${damageMessage}`
-      } else {
-        speechOutput = `${attackMessage} ${damageMessage}`
-      }
+      // if (critHitMessage && effectivenessMessage) {
+      //   speechOutput = `${attackMessage} ${critHitMessage} ${effectivenessMessage} ${damageMessage}.`
+      // } else if (critHitMessage) {
+      //   speechOutput = `${attackMessage} ${critHitMessage} ${damageMessage}`
+      // } else if (effectivenessMessage) {
+      //   speechOutput = `${attackMessage} ${effectivenessMessage} ${damageMessage}`
+      // } else {
+      //   speechOutput = `${attackMessage} ${damageMessage}`
+      // }
 
+      speechOutput = attackMessage + critHitMessage + effectivenessMessage + damageMessage
       console.log(`This is the speechOutput: ${speechOutput}`)
       // this.response.speak('The chosen move is a legal attack')
       this.emit(':ask', speechOutput, speechOutput);
