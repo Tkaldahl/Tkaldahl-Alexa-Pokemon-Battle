@@ -10,10 +10,10 @@ let activeBattle = false
 let battleStart = true // Changed for testing original value is false
 let pokemonArray = ['Venusaur', 'Blastoise', 'Charizard'] // An array for users to choose pokemon from. Checks for equality in the currentRoom function
 let garyPokemonArray = ['Exeggutor', 'Gyarados', 'Arcanine']
-let playerSelectedPokemon; // Changed for testing. Original value is null
-let npcSelectedPokemon; // Changed for testing. Original value is null
-let playerHp; // Changed for testing. Original value is null
-let npcHp; // Changed for testing. Original value is null
+let playerSelectedPokemon; // Insert these values for back end testing. Original value is null
+let npcSelectedPokemon; // Insert these values for back end testing. Original value is null
+let playerHp; // Insert these values for back end testing. Original value is null
+let npcHp; // Insert these values for back end testing. Original value is null
 let swordsdanceBuff;
 let withdrawBuff;
 let focusenergyBuff;
@@ -683,12 +683,12 @@ function damageCalculator (chosenMove, moveName, attackingPokemon, defendingPoke
   defendingPokemonHp = defendingPokemonHp - damageDealt
   let healedAmount;
   if (moveName === 'megadrain') {
-    healedAmount = (damageDealt * 0.75)
+    healedAmount = Math.ceil(damageDealt * 0.75)
     attackingPokemonHp = attackingPokemonHp + healedAmount
-    healingMessage = ` healing itself for ${healedAmount}`
+    healingMessage = ` healing ${healedAmount} damage.`
   }
   let attackMessage = ` ${attackingPokemon} used ${moveName}.`;
-  let damageMessage = ` It did ${damageDealt} damage to ${defendingPokemon}.`;
+  let damageMessage = ` It did ${damageDealt} damage to ${defendingPokemon} `;
   let battleReportMessage;
   if (defendingPokemonHp <= 0) {
     battleReportMessage = ` ${defendingPokemon} has fainted.`
