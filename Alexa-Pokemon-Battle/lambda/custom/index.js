@@ -273,10 +273,11 @@ const handlers = {
     }
 
     var room = currentRoom(this.event);
-    if (currentPokemon !== undefined) {
+
+    // Check to see that you have a pokemon selected and that you're not adding a repeat to the roster.
+    if (currentPokemon !== undefined && this.event.session.attributes['roster'].includes(currentPokemon) === false) {
       this.event.session.attributes['roster'].push(currentPokemon);
-      currentPokemon = undefined;
-    }
+      }
     // console.log(`WhereAmI: in ${JSON.stringify(room)}`);
     // console.log(`linksRegex.exec on room is: ${linksRegex.exec(room['_'])}`)
 
@@ -328,35 +329,8 @@ const handlers = {
     // } else {
     //   this.event.session.attributes['visited'].push(room['$']['pid']);
     // }
-    // all of this information is for visual Alexa tools. Call it using .cardRenderer(cardTitle, cardContent, imageObj); after a speak command.
-    // var cardTitle = firstSentence;
-    // var cardContent = (reprompt > '') ? reprompt : lastSentence;
-    // var imageObj = undefined;
 
-    // console.log(`WhereAmI: ${JSON.stringify({
-    //   "speak": speechOutput,
-    //   "listen": reprompt,
-    //   "card" : {
-    //     "title": cardTitle,
-    //     "content": cardContent,
-    //     "imageObj": imageObj
-    //   }
-    // })}`);
     linksRegex.lastIndex = 0;
-    // Commenting out function which presents game over if a room has no links leading out. I prefer to use the GameOver tag
-    // if (linksRegex.exec(room['_'])) {
-    //   // room has links leading out, so listen for further user input
-    //   this.response.speak(speechOutput)
-    //     .listen(reprompt)
-    //     .cardRenderer(cardTitle, cardContent, imageObj);
-    // } else {
-    //   console.log(`WhereAmI: at the end of a branch. Game over.`);
-    //   // clear session attributes
-    //   this.event.session.attributes['room'] = undefined;
-    //   this.event.session.attributes['visited'] = [];
-    //   this.response.speak(speechOutput + gameOver)
-    //     .cardRenderer(cardTitle, cardContent, imageObj);
-    // }
 
     // Seperate the tags into an array so we can pick different game actions for each room. Some rooms have multiple tags
     let roomTags = room['$']['tags'].split(' ')
@@ -370,11 +344,15 @@ const handlers = {
       // .cardRenderer(cardTitle, cardContent, imageObj);
     } else if (roomTags[0] === 'BattleRoom'){
       console.log(`You're in a battle room, you'll have to fight your way out`)
-      this.event.session.attributes['npc'].push(roomTags[1])
-      let npcIndex = this.event.session.attributes['npc'].length - 1
+      let npcName = roomTags[1]
+      // Checks npc session data for duplicates
+      if (this.event.session.attributes['npc'].includes(npcName) === false) {
+        this.event.session.attributes['npc'].push(npcName)
+      }
+      // let npcIndex = this.event.session.attributes['npc'].length - 1
       let npcPokemonIndex = Math.floor((Math.random() * 3));
       // Use the npcIndex to have the active npc pick their pokemon. I want to keep the npcIndex [] rather than using a '' because I want to add more npc's and tell the user who they've beaten in a later version.
-      if (this.event.session.attributes['npc'][npcIndex] === 'Gary') {
+      if (npcName === 'Gary') {
         // The variables below persist in the Alexa session but they do not in testing since we're creating a session in a vaccuum. Be aware when testing
         npcSelectedPokemon = garyPokemonArray[npcPokemonIndex]
         npcHp = pokemonStats[npcSelectedPokemon].stats.hp
@@ -701,7 +679,7 @@ function damageCalculator (chosenMove, moveName, attackingPokemon, defendingPoke
   } else if (defendingPokemonHp <= 40) {
     battleReportMessage = ` ${defendingPokemon} could fall at any second.`
   } else if (defendingPokemonHp <= 80) {
-    battleReportMessage = ` ${defendingPokemon} is weak.`
+    battleReportMessage = ` ${defendingPokemon} looks very weak.`
   } else if (defendingPokemonHp <= 120) {
     battleReportMessage = ` ${defendingPokemon} looks exhausted.`
   } else if (defendingPokemonHp <= 180) {
