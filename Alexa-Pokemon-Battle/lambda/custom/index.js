@@ -407,7 +407,7 @@ const handlers = {
     var speechOutput = ""
     if (battleStart === true) {
       // battleStart === false
-      speechOutput = `Gary smiles smugly as you enter the room. 'My pokemon is way out of your league' he says. '${npcSelectedPokemon} I choose you!'`
+      speechOutput = `Gary smiles smugly as you enter the room. 'My pokemon is way out of your league' he says. '${npcSelectedPokemon} I choose you!' The battle is on! Tell your pokemon what move to use.`
       this.response.speak(speechOutput)
         .listen('choose an attack')
       this.emit(':responseReady')
@@ -598,9 +598,21 @@ function followLink(event, direction_or_array) {
 }
 
 function damageCalculator (chosenMove, moveName, attackingPokemon, defendingPokemon) {
-  var playerDamageMessage;
+  let playerDamageMessage;
+  let healingMessage = '';
   let attackingPokemonStats = pokemonStats[attackingPokemon].stats;
   let defendingPokemonStats = pokemonStats[defendingPokemon].stats;
+  let defendingPokemonHp;
+  let attackingPokemonHp;
+  // Determine who to subtract hp from
+  if (garyPokemonArray.indexOf(defendingPokemon) > -1) {
+    defendingPokemonHp = npcHp
+    attackingPokemonHp = playerHp
+  } else {
+    defendingPokemonHp = playerHp
+    attackingPokemonHp = npcHp
+  }
+   
   // let chosenMove = pokemonStats[playerSelectedPokemon].moves[attackChoice];
 
   // Decide between the Attack or spAttack stat
@@ -665,41 +677,49 @@ function damageCalculator (chosenMove, moveName, attackingPokemon, defendingPoke
   } else if (effectiveMultiplier < 1) {
     effectivenessMessage = " It's not very effective";
   }
+
+  // After all multipliers applied, determine the damage, subtract from defendingPokemonHp, if it's a healing move, heal the attacking pokemon, provide battleReportMessage based on remaining health
   let damageDealt = Math.floor((((20 * chosenMove.power * (attackMultiplier / defendingPokemonStats.defense)) / 50 + 2) * STABMultiplier * critMultiplier * effectiveMultiplier));
-  npcHp = npcHp - damageDealt
+  defendingPokemonHp = defendingPokemonHp - damageDealt
+  let healedAmount;
+  if (moveName === 'megadrain') {
+    healedAmount = (damageDealt * 0.75)
+    attackingPokemonHp = attackingPokemonHp + healedAmount
+    healingMessage = ` healing itself for ${healedAmount}`
+  }
   let attackMessage = ` ${attackingPokemon} used ${moveName}.`;
   let damageMessage = ` It did ${damageDealt} damage to ${defendingPokemon}.`;
   let battleReportMessage;
-  if (npcHp <= 0) {
+  if (defendingPokemonHp <= 0) {
     battleReportMessage = ` ${defendingPokemon} has fainted.`
-  } else if (npcHp <= 40) {
+  } else if (defendingPokemonHp <= 40) {
     battleReportMessage = ` ${defendingPokemon} could fall at any second.`
-  } else if (npcHp <= 80) {
+  } else if (defendingPokemonHp <= 80) {
     battleReportMessage = ` ${defendingPokemon} is weak.`
-  } else if (npcHp <= 120) {
+  } else if (defendingPokemonHp <= 120) {
     battleReportMessage = ` ${defendingPokemon} looks exhausted.`
-  } else if (npcHp <= 180) {
+  } else if (defendingPokemonHp <= 180) {
     battleReportMessage = ` ${defendingPokemon} is slowing down.`
-  } else if (npcHp <= 240) {
+  } else if (defendingPokemonHp <= 240) {
     battleReportMessage = ` ${defendingPokemon} is starting to tire.`
-  } else if (npcHp <= 300) {
+  } else if (defendingPokemonHp <= 300) {
     battleReportMessage = ` but ${defendingPokemon} is still looking strong.`
-  } else if (npcHp <= 340) {
+  } else if (defendingPokemonHp <= 340) {
     battleReportMessage = ` ${defendingPokemon} gets serious.`
   } else {
     battleReportMessage = ` but ${defendingPokemon} doesn't look phased.`
   }
 
-  // Update the user on how each pokemon is doing 
-  // Looking strong
-  // Doesn't look phased
-  // Starting to look tired
-  // Getting worn down
-  // Is tired
-  // Can barely stand
-  // Could fall at any second
+  // Set the global hp variables to match the updated values after battle
+  if (garyPokemonArray.indexOf(defendingPokemon) > -1) {
+    npcHp = defendingPokemonHp
+    playerHp = attackingPokemonHp
+  } else {
+    playerHp = defendingPokemonHp
+    npcHp = attackingPokemonHp
+  }
 
-  playerDamageMessage = attackMessage + critHitMessage + effectivenessMessage + damageMessage + battleReportMessage
+  playerDamageMessage = attackMessage + critHitMessage + effectivenessMessage + damageMessage + healingMessage + battleReportMessage
   return playerDamageMessage
 }
 //COOKBOOK HELPER FUNCTIONS
