@@ -19,7 +19,7 @@ let focusenergyBuff;
 let pokemonStats = {
   Venusaur: {
     stats: {
-      type: 'Grass',
+      type: 'grass',
       hp: 364,
       attack: 289,
       defense: 291,
@@ -47,7 +47,7 @@ let pokemonStats = {
   },
   Blastoise: {
     stats: {
-      type: 'Water',
+      type: 'water',
       hp: 362,
       attack: 291,
       defense: 328,
@@ -75,7 +75,7 @@ let pokemonStats = {
   },
   Charizard: {
     stats: {
-      type: 'Fire',
+      type: 'fire',
       hp: 360,
       attack: 293,
       defense: 280,
@@ -103,7 +103,7 @@ let pokemonStats = {
   },
   'Exeggutor': {
     stats: {
-      type: 'Grass',
+      type: 'grass',
       hp: 394,
       attack: 317,
       defense: 295,
@@ -131,7 +131,7 @@ let pokemonStats = {
   },
   'Gyarados': {
     stats: {
-      type: 'Water',
+      type: 'water',
       hp: 394,
       attack: 383,
       defense: 282,
@@ -159,7 +159,7 @@ let pokemonStats = {
   },
   'Arcanine': {
     stats: {
-      type: 'Fire',
+      type: 'fire',
       hp: 384,
       attack: 350,
       defense: 284,
@@ -421,93 +421,33 @@ const handlers = {
     }
   },
   'ChooseMove': function() {
+    console.log('ChooseMove');
     var speechOutput;
     var playerDamageMessage;
     var npcDamageMessage;
-    console.log('ChooseMove');
+    var attacker = 'npc';
     // Some attacks are two words so we need to join them together
     var attackChoice = this.event.request.intent.slots.attack.value.split(' ');
     attackChoice = attackChoice.join('');
-    // console.log(`player chooses the attack: ${attackChoice}`)
     let userPokemonStats = pokemonStats[playerSelectedPokemon].stats;
     let npcPokemonStats = pokemonStats[npcSelectedPokemon].stats;
+
+    // Pick which player attacks first
+    if (userPokemonStats.speed > npcPokemonStats.speed) {
+      attacker = 'player'
+    }
+
+    // NPC picks an attack
+    let npcMovesArray = Object.keys(pokemonStats[npcSelectedPokemon].moves)
+    let npcChosenMove = npcMovesArray[Math.floor(Math.random() * 4)]
+    console.log(npcChosenMove)
+
     let chosenMove = pokemonStats[playerSelectedPokemon].moves[attackChoice];
     // Below is the battle simulator for when the player picks a legitimate attack.
     if (chosenMove) {
-      // Start calculation of user's dealt damage
-      speechOutput = playerDamageCalculator(attackChoice, this.event.request.intent.slots.attack.value)
-      // Decide between the Attack or spAttack stat
-      // let specialAtk = ['water', 'grass', 'fire', 'ice', 'electric', 'psychic', 'dragon', 'dark'];
-      // let attackMultiplier = userPokemonStats.spAttack;
-      // if (specialAtk.indexOf(chosenMove.type) < 0) {
-      //   attackMultiplier = userPokemonStats.attack;
-      //   console.log('now the normal attack modifier is being used instead');
-      // }
-      // // Decide if the move gets STAB
-      // let STABMultiplier = 1;
-      // if (chosenMove.type === userPokemonStats.type){
-      //   STABMultiplier = 1.5;
-      // }
-
-      // // Decide if critical hit
-      // let critHitMessage = '';
-      // let critMultiplier = 1;
-      // let critDecider = Math.floor(Math.random() * 256);
-      // let critThreshold = (userPokemonStats.speed / 4);
-      // if (focusenergyBuff) {
-      //   critThreshold = (critThreshold * 4)
-      // }
-      // if (attackChoice === 'slash') {
-      //   critThreshold = (critThreshold * 8)
-      // }
-      // if (critThreshold > critDecider) {
-      //   critMultiplier = 1.75
-      //   critHitMessage = " It's a critical hit!"
-      // }
-
-      // // Decide if super effective
-      // let effectiveMultiplier = 1;
-      // let effectivenessMessage = '';
-      // if (chosenMove.type === 'grass' || npcPokemonStats.type === 'dragon') {
-      //   if (npcPokemonStats.type === 'water') {
-      //     effectiveMultiplier = 2;
-      //   } else if (npcPokemonStats.type === 'fire'){
-      //     effectiveMultiplier = 0.5;
-      //   }
-      // } else if (chosenMove.type === 'water') {
-      //   if (npcPokemonStats.type === 'fire') {
-      //     effectiveMultiplier = 2;
-      //   } else if (npcPokemonStats.type === 'grass' || npcPokemonStats.type === 'dragon'){
-      //     effectiveMultiplier = 0.5;
-      //   }
-      // } else if (chosenMove.type === 'fire') {
-      //   if (npcPokemonStats.type === 'grass') {
-      //     effectiveMultiplier = 2;
-      //   } else if (npcPokemonStats.type === 'water' || npcPokemonStats.type === 'dragon'){
-      //     effectiveMultiplier = 0.5;
-      //   }
-      // } 
-
-      // if (effectiveMultiplier > 1) {
-      //   effectivenessMessage = " It's super effective!";
-      // } else if (effectiveMultiplier < 1) {
-      //   effectivenessMessage = " It's not very effective";
-      // }
-      // let damageDealt = Math.floor((((20 * chosenMove.power * (attackMultiplier / npcPokemonStats.defense)) / 50 + 2) * STABMultiplier * critMultiplier * effectiveMultiplier));
-      // npcHp = npcHp - damageDealt
-      // let attackMessage = ` ${playerSelectedPokemon} used ${this.event.request.intent.slots.attack.value}.`;
-      // let damageMessage = ` It did ${damageDealt} damage to ${npcSelectedPokemon}.`;
-      // // Update the user on how each pokemon is doing 
-      // // Looking strong
-      // // Doesn't look phased
-      // // Starting to look tired
-      // // Getting worn down
-      // // Is tired
-      // // Can barely stand
-      // // Could fall at any second
-
-      // playerDamageMessage = attackMessage + critHitMessage + effectivenessMessage + damageMessage
-      console.log(`This is the speechOutput: ${speechOutput}`)
+      playerDamageMessage = playerDamageCalculator(attackChoice, this.event.request.intent.slots.attack.value)
+      
+      console.log(`This is the speechOutput: ${playerDamageMessage}`)
       // this.response.speak('The chosen move is a legal attack')
       this.emit(':ask', speechOutput, speechOutput);
     } else {
@@ -661,6 +601,7 @@ function playerDamageCalculator (attackChoice, moveName/* , receivingPokemon */)
   let userPokemonStats = pokemonStats[playerSelectedPokemon].stats;
   let npcPokemonStats = pokemonStats[npcSelectedPokemon].stats;
   let chosenMove = pokemonStats[playerSelectedPokemon].moves[attackChoice];
+
   // Decide between the Attack or spAttack stat
   let specialAtk = ['water', 'grass', 'fire', 'ice', 'electric', 'psychic', 'dragon', 'dark'];
   let attackMultiplier = userPokemonStats.spAttack;
@@ -687,7 +628,7 @@ function playerDamageCalculator (attackChoice, moveName/* , receivingPokemon */)
   }
   if (critThreshold > critDecider) {
     critMultiplier = 1.75
-    critHitMessage = " It's a critical hit!"
+    critHitMessage = " Critical hit!"
   }
 
   // Decide if super effective
@@ -700,10 +641,15 @@ function playerDamageCalculator (attackChoice, moveName/* , receivingPokemon */)
       effectiveMultiplier = 0.5;
     }
   } else if (chosenMove.type === 'water') {
+    console.log('firing Blastois effectiveness multiplier')
+    console.log(`chosenMove.type: ${chosenMove.type}`)
+    console.log(`npcPokemonStats.type: ${npcPokemonStats.type}`)
     if (npcPokemonStats.type === 'fire') {
       effectiveMultiplier = 2;
+      console.log('firing Blastois effectiveness multiplier is 2')
     } else if (npcPokemonStats.type === 'grass' || npcPokemonStats.type === 'dragon'){
       effectiveMultiplier = 0.5;
+      console.log('firing Blastois effectiveness multiplier is 0.5')
     }
   } else if (chosenMove.type === 'fire') {
     if (npcPokemonStats.type === 'grass') {
@@ -722,6 +668,27 @@ function playerDamageCalculator (attackChoice, moveName/* , receivingPokemon */)
   npcHp = npcHp - damageDealt
   let attackMessage = ` ${playerSelectedPokemon} used ${moveName}.`;
   let damageMessage = ` It did ${damageDealt} damage to ${npcSelectedPokemon}.`;
+  let battleReportMessage;
+  if (npcHp <= 0) {
+    battleReportMessage = ` ${npcSelectedPokemon} has fainted.`
+  } else if (npcHp <= 40) {
+    battleReportMessage = ` ${npcSelectedPokemon} could fall at any second.`
+  } else if (npcHp <= 80) {
+    battleReportMessage = ` ${npcSelectedPokemon} is weak.`
+  } else if (npcHp <= 120) {
+    battleReportMessage = ` ${npcSelectedPokemon} looks exhausted.`
+  } else if (npcHp <= 180) {
+    battleReportMessage = ` ${npcSelectedPokemon} is slowing down.`
+  } else if (npcHp <= 240) {
+    battleReportMessage = ` ${npcSelectedPokemon} is starting to tire.`
+  } else if (npcHp <= 300) {
+    battleReportMessage = ` but ${npcSelectedPokemon} is still looking strong.`
+  } else if (npcHp <= 340) {
+    battleReportMessage = ` ${npcSelectedPokemon} gets serious.`
+  } else {
+    battleReportMessage = ` but ${npcSelectedPokemon} doesn't look phased.`
+  }
+
   // Update the user on how each pokemon is doing 
   // Looking strong
   // Doesn't look phased
@@ -731,7 +698,7 @@ function playerDamageCalculator (attackChoice, moveName/* , receivingPokemon */)
   // Can barely stand
   // Could fall at any second
 
-  playerDamageMessage = attackMessage + critHitMessage + effectivenessMessage + damageMessage
+  playerDamageMessage = attackMessage + critHitMessage + effectivenessMessage + damageMessage + battleReportMessage
   return playerDamageMessage
 }
 //COOKBOOK HELPER FUNCTIONS
