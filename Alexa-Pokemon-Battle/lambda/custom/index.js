@@ -7,13 +7,15 @@ var $twine = null;
 const linksRegex = /\[\[([^\|\]]*)\|?([^\]]*)\]\]/g;
 const gameOver = ' Want to try again? Say new game.'
 let activeBattle = false
-let battleStart = false
+let battleStart = true // Changed for testing original value is false
 let pokemonArray = ['Venusaur', 'Blastoise', 'Charizard'] // An array for users to choose pokemon from. Checks for equality in the currentRoom function
 let garyPokemonArray = ['Exeggutor', 'Gyarados', 'Arcanine']
-let playerSelectedPokemon;
-let npcSelectedPokemon;
-let playerHp;
-let npcHp;
+let playerSelectedPokemon = 'Blastoise'; // Changed for testing. Original value is null
+let npcSelectedPokemon = 'Exeggutor'; // Changed for testing. Original value is null
+let playerHp = 362; // Changed for testing. Original value is null
+let npcHp = 394; // Changed for testing. Original value is null
+let swordsdanceBuff;
+let focusenergyBuff;
 let pokemonStats = {
   Venusaur: {
     stats: {
@@ -366,6 +368,7 @@ const handlers = {
       let npcPokemonIndex = Math.floor((Math.random() * 3));
       // Use the npcIndex to have the active npc pick their pokemon. I want to keep the npcIndex [] rather than using a '' because I want to add more npc's and tell the user who they've beaten in a later version.
       if (this.event.session.attributes['npc'][npcIndex] === 'Gary') {
+        // The variables below persist in the Alexa session but they do not in testing since we're creating a session in a vaccuum. Be aware when testing
         npcSelectedPokemon = garyPokemonArray[npcPokemonIndex]
         npcHp = pokemonStats[npcSelectedPokemon].stats.hp
         playerSelectedPokemon = this.event.session.attributes['roster'][0]
@@ -403,7 +406,7 @@ const handlers = {
     var speechOutput = ""
     if (battleStart === true) {
       // battleStart === false
-      speechOutput = `Gary smiles smugly as you enter the room. 'My pokemon is way out of your league,' he says, '${npcSelectedPokemon} I choose you!'`
+      speechOutput = `Gary smiles smugly as you enter the room. 'My pokemon is way out of your league' he says. '${npcSelectedPokemon} I choose you!'`
       this.response.speak(speechOutput)
         .listen('choose an attack')
       this.emit(':responseReady')
@@ -420,20 +423,107 @@ const handlers = {
   'ChooseMove': function() {
     var speechOutput;
     console.log('ChooseMove');
-    var attackChoice = this.event.request.intent.slots.attack.value.split(' ')
-    attackChoice = attackChoice.join('')
-    console.log(`player chooses the attack: ${attackChoice}`)
-    var chosenMoveIndex;
-    if (pokemonStats[playerSelectedPokemon].moves[attackChoice]) {
-      console.log('The chosen move is a legal attack')
-      speechOutput = 'The chosen move is a legal attack'
+    // Some attacks are two words so we need to join them together
+    var attackChoice = this.event.request.intent.slots.attack.value.split(' ');
+    attackChoice = attackChoice.join('');
+    // console.log(`player chooses the attack: ${attackChoice}`)
+    let userPokemonStats = pokemonStats[playerSelectedPokemon].stats;
+    let npcPokemonStats = pokemonStats[npcSelectedPokemon].stats;
+    let chosenMove = pokemonStats[playerSelectedPokemon].moves[attackChoice];
+    // Below is the battle simulator for when the player picks a legitimate attack.
+    if (chosenMove) {
+      // Decide between the Attack or spAttack stat
+      let specialAtk = ['water', 'grass', 'fire', 'ice', 'electric', 'psychic', 'dragon', 'dark'];
+      let attackMultiplier = userPokemonStats.spAttack;
+      if (specialAtk.indexOf(chosenMove.type) < 0) {
+        attackMultiplier = userPokemonStats.attack;
+        console.log('now the normal attack modifier is being used instead');
+      }
+      // Decide if the move gets STAB
+      let STABMultiplier = 1;
+      if (chosenMove.type === userPokemonStats.type){
+        STABMultiplier = 1.5;
+      }
+
+      // Decide if critical hit
+      let critHitMessage;
+      let critMultiplier = 1;
+      let critDecider = Math.floor(Math.random() * 256);
+      let critThreshold = (userPokemonStats.speed / 2);
+      if (focusenergyBuff) {
+        critThreshold = (critThreshold * 4)
+      }
+      if (attackChoice === 'slash') {
+        critThreshold = (critThreshold * 8)
+      }
+      if (critThreshold > critDecider) {
+        critMultiplier = 1.75
+        critHitMessage = " It's a critical hit!"
+      }
+
+      // Decide if super effective
+      let effectiveMultiplier = 1;
+      let effectivenessMessage;
+      if (chosenMove.type === 'grass' || npcPokemonStats.type === 'dragon') {
+        if (npcPokemonStats.type === 'water') {
+          effectiveMultiplier = 2;
+        } else if (npcPokemonStats.type === 'fire'){
+          effectiveMultiplier = 0.5;
+        }
+      } else if (chosenMove.type === 'water') {
+        if (npcPokemonStats.type === 'fire') {
+          effectiveMultiplier = 2;
+        } else if (npcPokemonStats.type === 'grass' || npcPokemonStats.type === 'dragon'){
+          effectiveMultiplier = 0.5;
+        }
+      } else if (chosenMove.type === 'fire') {
+        if (npcPokemonStats.type === 'grass') {
+          effectiveMultiplier = 2;
+        } else if (npcPokemonStats.type === 'water' || npcPokemonStats.type === 'dragon'){
+          effectiveMultiplier = 0.5;
+        }
+      } 
+
+      if (effectiveMultiplier > 1) {
+        effectivenessMessage = " It's super effective!";
+      } else if (effectiveMultiplier < 1) {
+        effectivenessMessage = " It's not very effective";
+      }
+      let damage = Math.floor((((20 * chosenMove.power * (attackMultiplier / npcPokemonStats.defense)) / 50 + 2) * STABMultiplier * critMultiplier * effectiveMultiplier));
+      
+      let attackMessage = ` ${playerSelectedPokemon} used ${this.event.request.intent.slots.attack.value}.`;
+      let damageMessage = ` It did ${damage} damage to ${npcSelectedPokemon}.`;
+
+      // Update the user on how each pokemon is doing 
+      // Looking strong
+      // Isn't phased
+      // Is hanging in there
+      // Starting to get worn down
+      // is tired
+      // can barely stand
+      // is looking weak
+      console.log(`This is the attackMessage: ${attackMessage}`)
+      console.log(`This is the critHitMessage: ${critHitMessage}`)
+      console.log(`This is the effectivenessMessage: ${effectivenessMessage}`)
+      console.log(`This is the damageMessage: ${damageMessage}`)
+      if (critHitMessage && effectivenessMessage) {
+        speechOutput = `${attackMessage} ${critHitMessage} ${effectivenessMessage} ${damageMessage}.`
+      } else if (critHitMessage) {
+        speechOutput = `${attackMessage} ${critHitMessage} ${damageMessage}`
+      } else if (effectivenessMessage) {
+        speechOutput = `${attackMessage} ${effectivenessMessage} ${damageMessage}`
+      } else {
+        speechOutput = `${attackMessage} ${damageMessage}`
+      }
+
+      console.log(`This is the speechOutput: ${speechOutput}`)
       // this.response.speak('The chosen move is a legal attack')
-      this.emit(':ask', speechOutput, speechOutput)
+      this.emit(':ask', speechOutput, speechOutput);
     } else {
-      console.log(`${playerSelectedPokemon} doesn't know that move`)
-      speechOutput = `${playerSelectedPokemon} doesn't know that move`
+      // console.log(`${playerSelectedPokemon} doesn't know that move`)
+      speechOutput = `${playerSelectedPokemon} doesn't know that move`;
       // this.response.speak(`${playerSelectedPokemon} doesn't know that move`)
-      this.emit(':ask', speechOutput, speechOutput)
+      this.emit(':ask', speechOutput, speechOutput);
     }
     // console.log(`${attackChoice} has `)
     // The name of the attack we choose is stored in this.event.request.intent.slots.attack.value
