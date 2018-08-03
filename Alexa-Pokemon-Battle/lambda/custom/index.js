@@ -7,7 +7,7 @@ var $twine = null;
 const linksRegex = /\[\[([^\|\]]*)\|?([^\]]*)\]\]/g;
 const gameOver = ' Want to try again? Say new game.'
 let activeBattle = false
-let battleStart = true // Changed for testing original value is false
+let battleStart = false // Changed for testing original value is false
 let pokemonArray = ['Venusaur', 'Blastoise', 'Charizard'] // An array for users to choose pokemon from. Checks for equality in the currentRoom function
 let garyPokemonArray = ['Exeggutor', 'Gyarados', 'Arcanine']
 let playerSelectedPokemon; // Insert these values for back end testing. Original value is null
@@ -252,9 +252,15 @@ const handlers = {
   },
   'RestartGame': function() {
     console.log(`RestartGame:`);
-    // clear session attributes
+    // clear session attributes and global variables
     this.event.session.attributes['room'] = undefined;
     this.event.session.attributes['visited'] = [];
+    this.event.session.attributes['roster'] = []
+    this.event.session.attributes['npc'] = [];
+    playerSelectedPokemon;
+    npcSelectedPokemon;
+    playerHp;
+    npcHp;
     this.emit('WhereAmI');
   },
   'WhereAmI': function() {
