@@ -457,9 +457,8 @@ const handlers = {
       // this.response.speak('The chosen move is a legal attack')
       this.emit(':ask', speechOutput, speechOutput);
     } else {
-      currentPokemonMoves()
-      let availableMovesMessage;
-      speechOutput = `${playerSelectedPokemon} doesn't know that move`;
+      let availableMovesMessage = currentPokemonMoves();
+      speechOutput = `${playerSelectedPokemon} doesn't know that move. You can use ${availableMovesMessage}`;
       this.emit(':ask', speechOutput, speechOutput);
     }
   },
@@ -582,7 +581,9 @@ function followLink(event, direction_or_array) {
 }
 
 function currentPokemonMoves() {
-  console.log(`the currentPokemon is: ${playerSelectedPokemon}`)
+  // console.log(`the currentPokemon move object keys are: ${Object.keys(pokemonStats[playerSelectedPokemon].moves)}`)
+  // console.log(`the currentPokemon move object JSON.stringified is: ${JSON.stringify(pokemonStats[playerSelectedPokemon].moves)}`)
+  return Object.keys(pokemonStats[playerSelectedPokemon].moves)
 }
 
 
