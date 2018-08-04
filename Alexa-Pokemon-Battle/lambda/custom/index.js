@@ -10,10 +10,14 @@ let activeBattle = false
 let battleStart = false // Changed for testing original value is false
 let pokemonArray = ['Venusaur', 'Blastoise', 'Charizard'] // An array for users to choose pokemon from. Checks for equality in the currentRoom function
 let garyPokemonArray = ['Exeggutor', 'Gyarados', 'Arcanine']
-let playerSelectedPokemon; // Insert these values for back end testing. Original value is null
-let npcSelectedPokemon; // Insert these values for back end testing. Original value is null
-let playerHp; // Insert these values for back end testing. Original value is null
-let npcHp; // Insert these values for back end testing. Original value is null
+// let playerSelectedPokemon; // Insert these values for back end testing. Original value is null
+// let npcSelectedPokemon; // Insert these values for back end testing. Original value is null
+// let playerHp; // Insert these values for back end testing. Original value is null
+// let npcHp; // Insert these values for back end testing. Original value is null
+let playerSelectedPokemon = 'Charizard'; 
+let npcSelectedPokemon = 'Exeggutor';
+let playerHp = 360;
+let npcHp = 360;
 let swordsdanceBuff;
 let withdrawBuff;
 let focusenergyBuff;
@@ -453,9 +457,9 @@ const handlers = {
       // this.response.speak('The chosen move is a legal attack')
       this.emit(':ask', speechOutput, speechOutput);
     } else {
-      // console.log(`${playerSelectedPokemon} doesn't know that move`)
+      currentPokemonMoves()
+      let availableMovesMessage;
       speechOutput = `${playerSelectedPokemon} doesn't know that move`;
-      // this.response.speak(`${playerSelectedPokemon} doesn't know that move`)
       this.emit(':ask', speechOutput, speechOutput);
     }
   },
@@ -576,6 +580,11 @@ function followLink(event, direction_or_array) {
     return !result;
   });
 }
+
+function currentPokemonMoves() {
+  console.log(`the currentPokemon is: ${playerSelectedPokemon}`)
+}
+
 
 function damageCalculator (chosenMove, moveName, attackingPokemon, defendingPokemon) {
   let playerDamageMessage;
