@@ -10,14 +10,14 @@ let activeBattle = false
 let battleStart = false // Changed for testing original value is false
 let pokemonArray = ['Venusaur', 'Blastoise', 'Charizard'] // An array for users to choose pokemon from. Checks for equality in the currentRoom function
 let garyPokemonArray = ['Exeggutor', 'Gyarados', 'Arcanine']
-// let playerSelectedPokemon; // Insert these values for back end testing. Original value is null
-// let npcSelectedPokemon; // Insert these values for back end testing. Original value is null
-// let playerHp; // Insert these values for back end testing. Original value is null
-// let npcHp; // Insert these values for back end testing. Original value is null
-let playerSelectedPokemon = 'Charizard'; 
-let npcSelectedPokemon = 'Exeggutor';
-let playerHp = 360;
-let npcHp = 360;
+let playerSelectedPokemon; // Insert these values for back end testing. Original value is null
+let npcSelectedPokemon; // Insert these values for back end testing. Original value is null
+let playerHp; // Insert these values for back end testing. Original value is null
+let npcHp; // Insert these values for back end testing. Original value is null
+// let playerSelectedPokemon = 'Charizard'; 
+// let npcSelectedPokemon = 'Exeggutor';
+// let playerHp = 360;
+// let npcHp = 360;
 let swordsdanceBuff;
 let withdrawBuff;
 let focusenergyBuff;
@@ -275,7 +275,7 @@ const handlers = {
       this.event.session.attributes['roster'] = []
       this.event.session.attributes['npc'] = [];
       this.event.session.attributes['room'] = $twine[0]['$']['pid'];
-      speechOutput = `Welcome to ${story.replace('.html','')}. Lets start your game. `;
+      speechOutput = `Welcome to Pokemon Arena. Lets start your game. `;
     }
 
     var room = currentRoom(this.event);
@@ -457,10 +457,20 @@ const handlers = {
       // this.response.speak('The chosen move is a legal attack')
       this.emit(':ask', speechOutput, speechOutput);
     } else {
-      let availableMovesMessage = currentPokemonMoves();
+      let pokemon;
+      // console.log(`this.event is: ${JSON.stringify(this.event)}`)
+      // if (this.event.slotValues['pokemon']) {
+      //   pokemon = this.event.slotValues['pokemon']
+      // }
+      let availableMovesMessage = currentPokemonMoves(pokemon);
       speechOutput = `${playerSelectedPokemon} doesn't know that move. You can use ${availableMovesMessage}`;
       this.emit(':ask', speechOutput, speechOutput);
     }
+  },
+  'MovesHelp': function() {
+    let availableMovesMessage = currentPokemonMoves();
+    let speechOutput = `${playerSelectedPokemon} knows ${availableMovesMessage}`;
+    this.emit(':ask', speechOutput, speechOutput);
   },
   'AMAZON.HelpIntent': function() {
     var speechOutput = 'This is the Sample Gamebook Skill. ';
@@ -580,10 +590,15 @@ function followLink(event, direction_or_array) {
   });
 }
 
-function currentPokemonMoves() {
+function currentPokemonMoves(pokemon) {
   // console.log(`the currentPokemon move object keys are: ${Object.keys(pokemonStats[playerSelectedPokemon].moves)}`)
   // console.log(`the currentPokemon move object JSON.stringified is: ${JSON.stringify(pokemonStats[playerSelectedPokemon].moves)}`)
-  return Object.keys(pokemonStats[playerSelectedPokemon].moves)
+  if (pokemon) {
+    console.log(`currentPokemonMoves is firing with pokemon: ${pokemon}`)
+    return Object.keys(pokemonStats[playerSelectedPokemon].moves)
+  } else {
+    return Object.keys(pokemonStats[playerSelectedPokemon].moves)
+  }
 }
 
 
@@ -637,27 +652,22 @@ function damageCalculator (chosenMove, moveName, attackingPokemon, defendingPoke
   // Decide if super effective
   let effectiveMultiplier = 1;
   let effectivenessMessage = '';
-  if (chosenMove.type === 'grass' || defendingPokemonStats.type === 'dragon') {
+  if (chosenMove.type === 'grass') {
     if (defendingPokemonStats.type === 'water') {
       effectiveMultiplier = 2;
-    } else if (defendingPokemonStats.type === 'fire'){
+    } else if (defendingPokemonStats.type === 'fire' || defendingPokemonStats.type === 'dragon' || defendingPokemonStats.type === 'grass') {
       effectiveMultiplier = 0.5;
     }
   } else if (chosenMove.type === 'water') {
-    console.log('firing Blastois effectiveness multiplier')
-    console.log(`chosenMove.type: ${chosenMove.type}`)
-    console.log(`defendingPokemonStats.type: ${defendingPokemonStats.type}`)
     if (defendingPokemonStats.type === 'fire') {
       effectiveMultiplier = 2;
-      console.log('firing Blastois effectiveness multiplier is 2')
-    } else if (defendingPokemonStats.type === 'grass' || defendingPokemonStats.type === 'dragon'){
+    } else if (defendingPokemonStats.type === 'grass' || defendingPokemonStats.type === 'dragon' || defendingPokemonStats.type === 'water') {
       effectiveMultiplier = 0.5;
-      console.log('firing Blastois effectiveness multiplier is 0.5')
     }
   } else if (chosenMove.type === 'fire') {
     if (defendingPokemonStats.type === 'grass') {
       effectiveMultiplier = 2;
-    } else if (defendingPokemonStats.type === 'water' || defendingPokemonStats.type === 'dragon'){
+    } else if (defendingPokemonStats.type === 'water' || defendingPokemonStats.type === 'dragon' || defendingPokemonStats.type === 'fire') {
       effectiveMultiplier = 0.5;
     }
   } 
